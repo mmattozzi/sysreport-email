@@ -20,6 +20,12 @@ def get_hostname():
         raise RuntimeError(f"Error running hostname: {result.stderr.decode()}")
     return result.stdout.decode().strip()
 
+def get_wan_ip_address():
+    result = subprocess.run(['curl', '-s', 'https://checkip.amazonaws.com'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if result.returncode != 0:
+        raise RuntimeError(f"Error running curl: {result.stderr.decode()}")
+    return result.stdout.decode().strip()
+
 def send_email(from_email, to_email, sendmail_cmd):
     hostname = get_hostname()
     subject = f"{hostname} System Report: {datetime.today().strftime('%m/%d/%Y')}"
@@ -27,6 +33,7 @@ def send_email(from_email, to_email, sendmail_cmd):
     # Get the disk usage and mdadm details
     disk_usage = get_disk_usage()
     mdadm_detail = get_mdadm_detail()
+    wan_ip_address = get_wan_ip_address()
 
     # Construct the email headers and body
     message = f"""From: {from_email}
@@ -48,6 +55,8 @@ Content-Type: text/html
     <pre>{disk_usage}</pre>
     <h3>MDADM Detail:</h3>
     <pre>{mdadm_detail}</pre>
+    <h3>WAN IP Address:</h3>
+    <p>{wan_ip_address}</p>
 </body>
 </html>
 """
